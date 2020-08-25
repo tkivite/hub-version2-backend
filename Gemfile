@@ -18,6 +18,10 @@ gem 'puma', '~> 4.1'
 
 gem 'pg'
 
+gem 'bcrypt'
+gem 'jwt'
+gem 'simple_command'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.4.2', require: false
 
