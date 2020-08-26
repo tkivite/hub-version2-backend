@@ -17,7 +17,6 @@ RSpec.describe User, type: :model do
   end
   context 'validations' do
     before { create(:user) }
-
     context 'presence' do
       it { should validate_presence_of(:firstname) }
       it { should validate_presence_of(:othernames) }
@@ -26,7 +25,6 @@ RSpec.describe User, type: :model do
       it { should validate_presence_of(:mobile) }
       it { should validate_presence_of(:password_digest) }
     end
-
     context 'uniqueness' do
       it { should validate_uniqueness_of(:email).case_insensitive }
       it { should validate_uniqueness_of(:mobile).case_insensitive }
