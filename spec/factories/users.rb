@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :user do
     firstname { 'demo' }
     othernames { 'user' }
     gender { 'Male' }
     email { 'demouser@demo.test' }
-    password_digest { 'Thisisatestpassword' }
+    password { 'password' }
     mobile { '0725475051' }
     created_by { '1' }
     last_login_time { '2020-08-25 15:07:49' }

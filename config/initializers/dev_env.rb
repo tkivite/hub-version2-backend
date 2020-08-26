@@ -1,0 +1,1 @@
+ENV['JWT_TOKEN_KEY'] = 'jwtisawesomeweuseitatlipalater'
