@@ -5,13 +5,14 @@ class UsersController < ApplicationController
 
   # GET /users
   def index
+    @users = User.all
     json_response(@users, :ok)
   end
 
   # POST /users
   def create
     @user = User.new(user_params)
-    @user.active_status = true
+    @user.status = 0
 
     # if @user.save!
     #   puts '------------------------------------------'
