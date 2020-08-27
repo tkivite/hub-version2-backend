@@ -7,9 +7,10 @@ class User < ApplicationRecord
   # Model associations
   #   has_many :roles, foreign_key: :created_by
   has_many :assignments
+  has_many :reset_tokens
   has_many :roles, through: :assignments
   # Validations
-  validates_presence_of :firstname, :email, :password_digest, :othernames, :gender, :mobile
+  validates_presence_of :firstname, :email, :othernames, :gender, :mobile
 
   VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i.freeze
   validates_uniqueness_of :email, case_sensitive: false
@@ -19,5 +20,17 @@ class User < ApplicationRecord
   # method to check if the user has a particular role:
   def role?(role)
     roles.any? { |r| r.name.underscore.to_sym == role }
+  end
+
+  def generate_token
+    self.reset_tokens.update_all(used: true)
+    token = SecureRandom.hex(10)
+    reset_token = ResetToken.new
+    reset_token.user_id = self.id
+    reset_token.token = token
+    reset_token.used = false
+    reset_token.expiration =  Time.now.utc + 24.hours
+    reset_token.save!
+    token
   end
 end

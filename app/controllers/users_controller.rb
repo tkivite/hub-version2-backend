@@ -2,9 +2,9 @@
 
 class UsersController < ApplicationController
   before_action :set_user, only: %i[show update destroy]
-
   # GET /users
   def index
+    p 'here'
     @users = User.all
     json_response(@users, :ok)
   end
@@ -13,57 +13,20 @@ class UsersController < ApplicationController
   def create
     @user = User.new(user_params)
     @user.status = 0
-
-    # if @user.save!
-    #   puts '------------------------------------------'
-    #   msg = "A new user has been created. Details Name: #{@user.firstname} Email: #{@user.email}"
-    #   puts msg
-    #   puts '------------------------------------------'
-
-    #   @user.generate_password_token!
-    #   @user.reload
-    #   url = ENV['FIRST_TIME_LOGIN_URL']
-    #   puts "creating #{user_params}"
-    #   token = @user.reset_password_token
-    #   msg += "\n\n\t You have been created as a user on Lipalater VAS portal. Click on the link below to set you access credentials:"
-    #   msg += "\n\n\t URL:- #{url}?token=#{token}"
-    #   msg += "\n\n\t Username:- #{@user.email}"
-    #   msg += "\n\n\t"
-    #   msg += "\n\n\t If this email was sent by mistake kindly ignore"
-    #   msg += "\n\n\t Should you have challenges or need our assistance feel free to call us on: 0709684000"
-    #   to = @user.email
-    #   from = 'thehub@lipalater.com'
-    #   begin
-    #     puts "sending email to: #{to}   from: #{from}  msg: #{msg}"
-    #     email_payload = {
-    #       'subject' => 'The hub - Welcome to the hub',
-    #       'message' => msg,
-    #       'to' => to,
-    #       'from' => from,
-    #       'purpose' => 'general'
-
-    #     }
-    #     NotificationMailerWorker.perform_async(email_payload)
-    #     @user.status = 0
-    #     @user.save
-    #   rescue StandardError => e
-    #     puts '------------------------------------------'
-    #     msg = "An error occurred while sending user creation email to #{to} with the message : #{e.inspect} Error Backtrace: #{e.backtrace}"
-    #     puts msg
-    #     puts '------------------------------------------'
-    #     render json: { error: ['Problems Occurred trying to send email.'] }, status: :created
-    #     return
-    #   end
-
-    # else
-    #   render json: { error: ['Problems Occurred trying to save user record.'] }, status: :error
-    #   return
-    # end
-    json_response(@user, :created)
+    if @user.save!
+      @user.reload
+      token = @user.generate_token
+      payload = generate_email_payload(@user,token)
+      NotificationMailerWorker.perform_async(payload)
+      json_response(@user, :created)
+    else
+      json_response(@user, :internal_error)
+    end
   end
 
   # GET /users/:id
   def show
+    p 'here2'
     json_response(@user)
   end
 
@@ -90,9 +53,23 @@ class UsersController < ApplicationController
     params.permit(:firstname, :othernames, :gender, :email, :password, :mobile, :status)
   end
 
-  def set_user
-    @user = User.find(params[:id])
+  def generate_email_payload(user,token)
+    url = ENV['FIRST_TIME_LOGIN_URL']
+    msg = ""
+    msg += "\n\n\t You have been created as a user on the hub. Click on the link below to set you access credentials:"
+    msg += "\n\n\t URL:- #{url}?token=#{token}"
+    msg += "\n\n\t Username:- #{user.email}"
+    msg += "\n\n\t"
+    msg += "\n\n\t If this email was sent by mistake kindly ignore"
+    msg += "\n\n\t Should you have challenges or need our assistance feel free to call us on: 0709684000"
+    to = user.email
+    from = 'thehub@lipalater.com'
+    {
+      'subject' => 'The hub - Welcome to the hub',
+      'message' => msg,
+      'to' => to,
+      'from' => from,
+      'purpose' => 'general'
+    }
   end
-
-  def get_apps_by_store; end
 end

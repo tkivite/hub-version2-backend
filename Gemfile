@@ -22,6 +22,9 @@ gem 'bcrypt'
 gem 'jwt'
 gem 'simple_command'
 
+gem 'em-http-request' # required by SendMessages wrapper
+gem 'sidekiq'
+
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.4.2', require: false
 
