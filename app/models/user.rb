@@ -9,6 +9,8 @@ class User < ApplicationRecord
   has_many :assignments
   has_many :reset_tokens
   has_many :roles, through: :assignments
+
+  enum status: %i[pending active inactive deactivated deleted]
   # Validations
   validates_presence_of :firstname, :email, :othernames, :gender, :mobile
 
