@@ -55,9 +55,9 @@ class UsersController < ApplicationController
 
   def generate_email_payload(user,token)
     url = ENV['FIRST_TIME_LOGIN_URL']
-    msg = ""
+    msg = "Dear #{user.firstname},"
     msg += "\n\n\t You have been created as a user on the hub. Click on the link below to set you access credentials:"
-    msg += "\n\n\t URL:- #{url}?token=#{token}"
+    msg += "\n\n\t URL:- #{url}/setpassword?token=#{token}&email=#{user.email}"
     msg += "\n\n\t Username:- #{user.email}"
     msg += "\n\n\t"
     msg += "\n\n\t If this email was sent by mistake kindly ignore"
