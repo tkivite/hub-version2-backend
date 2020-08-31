@@ -22,6 +22,8 @@ gem 'bcrypt'
 gem 'jwt'
 gem 'simple_command'
 
+gem 'pundit'
+
 gem 'em-http-request' # required by SendMessages wrapper
 gem 'sidekiq'
 

@@ -5,7 +5,8 @@ class UsersController < ApplicationController
   # GET /users
   def index
     p 'here'
-    @users = User.all
+    # @users = User.all
+    @users = policy_scope(User)
     json_response(@users, :ok)
   end
 
@@ -16,7 +17,7 @@ class UsersController < ApplicationController
     if @user.save!
       @user.reload
       token = @user.generate_token
-      payload = generate_email_payload(@user,token)
+      payload = generate_email_payload(@user, token)
       NotificationMailerWorker.perform_async(payload)
       json_response(@user, :created)
     else
@@ -53,7 +54,7 @@ class UsersController < ApplicationController
     params.permit(:firstname, :othernames, :gender, :email, :password, :mobile, :status)
   end
 
-  def generate_email_payload(user,token)
+  def generate_email_payload(user, token)
     url = ENV['FIRST_TIME_LOGIN_URL']
     msg = "Dear #{user.firstname},"
     msg += "\n\n\t You have been created as a user on the hub. Click on the link below to set you access credentials:"

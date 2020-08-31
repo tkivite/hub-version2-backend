@@ -6,6 +6,7 @@ class CreateRoles < ActiveRecord::Migration[6.0]
       t.string :name
       t.integer :role_type
       t.float :rank
+      t.text :permissions, array: true, default: []
       t.uuid :created_by
 
       t.timestamps

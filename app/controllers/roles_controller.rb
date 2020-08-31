@@ -5,6 +5,7 @@ class RolesController < ApplicationController
   # GET /roles
   def index
     @roles = Role.all
+    # @roles = policy_scope(Role.all)
     json_response(@roles, :ok)
   end
 
@@ -38,6 +39,7 @@ class RolesController < ApplicationController
     # whitelist params
     params.permit(:name, :role_type, :rank)
   end
+
   def set_role
     @role = Role.find(params[:id])
   end

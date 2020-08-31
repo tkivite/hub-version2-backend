@@ -11,7 +11,7 @@ class AuthenticateUser
 
   def call
     token = JsonWebToken.encode(user_id: user.id) if user
-    { user: user, access_token: token }
+    { user: user, user_roles: user.roles, access_token: token }
   end
 
   private
@@ -19,7 +19,7 @@ class AuthenticateUser
   attr_accessor :email, :password
 
   def user
-    user = User.find_by_email(email)
+    user = User.includes(:roles).where(email: email).first
     return user if user&.authenticate(password)
 
     errors.add :user_authentication, 'invalid credentials'

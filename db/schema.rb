@@ -42,6 +42,7 @@ ActiveRecord::Schema.define(version: 2020_08_27_093641) do
     t.string "name"
     t.integer "role_type"
     t.float "rank"
+    t.text "permissions", default: [], array: true
     t.uuid "created_by"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

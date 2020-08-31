@@ -22,7 +22,7 @@ unless dev_user.present?
     created_by: 0,
     last_login_time: '2020-08-25 15:07:49',
     logged_in: false,
-    status: '1'
+    status: 1
   )
   # dev_user.super_user!
 
@@ -42,16 +42,15 @@ unless dev_assignment.present?
 end
 p 'Creating other roles'
 roles_list = [
-
-  ['Executive', 0, 1],
-  ['BDManager', 0, 1],
-  ['ACManager', 0, 1],
-  ['StoreManager', 0, 0],
-  ['BranchManager', 0, 0],
-  ['Finance', 0, 1],
+  ['Guest', 0, 1],
   ['Sales', 0, 1],
-  ['Guest', 0, 1]
+  ['Finance', 0, 1],
+  ['BranchManager', 0, 0],
+  ['StoreManager', 0, 0],
+  ['ACManager', 0, 1],
+  ['BDManager', 0, 1],
+  ['Executive', 0, 1]
 ]
 roles_list.each_with_index do |role, num|
-  Role.create!(name: role[0], created_by: dev_user.id, rank: num, role_type: role[2])
+  Role.create!(name: role[0], created_by: dev_user.id, rank: (num + 1), role_type: role[2])
 end
