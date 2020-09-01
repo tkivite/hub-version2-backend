@@ -20,6 +20,9 @@ class ApplicationPolicy
 
   def method_missing(name, *args)
     if name.to_s.last == '?'
+      p name
+      p inferred_activity(name.to_s.gsub('?', ''))
+      p user_permissions
       user_permissions.include?(inferred_activity(name.to_s.gsub('?', '')))
     else
       super

@@ -10,12 +10,12 @@ class ApplicationController < ActionController::API
   # For APIs, you may want to use :null_session instead.
   # protect_from_forgery with: :null_session
 
+  # Authenticate all requests
+  before_action :authenticate_request
+
   # Globally rescue Authorization Errors in controller.
   # Returning 403 Forbidden if permission is denied
   rescue_from Pundit::NotAuthorizedError, with: :permission_denied
-
-  # Authenticate all requests
-  # before_action :authenticate_request
 
   # Enforces access right checks for individuals resources
   after_action :verify_authorized, except: :index
@@ -26,10 +26,11 @@ class ApplicationController < ActionController::API
 
   private
 
-  # def authenticate_request
-  #   @current_user = AuthorizeApiRequest.call(request.headers).result
-  #   render json: { error: 'Not Authorized' }, status: 401 unless @current_user
-  # end
+  def authenticate_request
+    @current_user = AuthorizeApiRequest.call(request.headers).result
+    p current_user
+    render json: { error: 'Not Authorized' }, status: 401 unless @current_user
+  end
 
   def permission_denied
     unless @current_user

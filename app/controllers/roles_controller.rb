@@ -5,13 +5,16 @@ class RolesController < ApplicationController
   # GET /roles
   def index
     @roles = Role.all
+    authorize @roles, :index?
     # @roles = policy_scope(Role.all)
+    p @roles
     json_response(@roles, :ok)
   end
 
   # POST /roles
   def create
     @role = Role.new(role_params)
+    authorize @role, :create?
     json_response(@role, :internal_error) unless @role.save
     json_response(@role, :created)
   end
