@@ -5,9 +5,8 @@ class RolesController < ApplicationController
   # GET /roles
   def index
     @roles = Role.all
-    authorize @roles.first
-    # @roles = policy_scope(Role.all)
-    p @roles
+    authorize @roles.first, :list?
+    policy_scope @roles
     json_response(@roles, :ok)
   end
 

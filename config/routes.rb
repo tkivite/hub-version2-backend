@@ -12,4 +12,6 @@ Rails.application.routes.draw do
   end
   resources :roles do
   end
+  resources :assignments do
+  end
 end

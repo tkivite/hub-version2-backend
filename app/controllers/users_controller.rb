@@ -5,7 +5,8 @@ class UsersController < ApplicationController
   # GET /users
   def index
     @users = User.all
-    authorize @users.first, :index?
+    authorize @users.first, :list?
+    policy_scope @users
     json_response(@users, :ok)
   end
 
@@ -27,17 +28,20 @@ class UsersController < ApplicationController
 
   # GET /users/:id
   def show
+    authorize @user, :view?
     json_response(@user)
   end
 
   # PUT /users/:id
   def update
+    authorize @user, :update?
     @user.update!(user_params)
     json_response(@user)
   end
 
   # DELETE /users/:id
   def destroy
+    authorize @user, :delete?
     @user.destroy
     # @users = User.all
     json_response(@users)
