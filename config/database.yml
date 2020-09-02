@@ -74,11 +74,7 @@ test:
 #
 # You can use this database configuration with:
 #
-#   production:
-#     url: <%= ENV['DATABASE_URL'] %>
-#
-production:
-  <<: *default
-  database: partners_portal_production
-  username: partners-portal-backend
-  password: <%= ENV['PARTNERS-PORTAL-BACKEND_DATABASE_PASSWORD'] %>
+  production:
+    url: <%= ENV['DATABASE_URL'] %>
+
+
