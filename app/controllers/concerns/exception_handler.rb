@@ -1,16 +1,19 @@
+# frozen_string_literal: true
+
 # app/controllers/concerns/exception_handler.rb
 module ExceptionHandler
-    # provides the more graceful `included` method
-    extend ActiveSupport::Concern
-  
-    included do
-      rescue_from ActiveRecord::RecordNotFound do |e|
-        json_response({ message: e.message }, :not_found)
-      end
-  
-      rescue_from ActiveRecord::RecordInvalid do |e|
-        json_response({ message: e.message }, :unprocessable_entity)
-      end
+  # provides the more graceful `included` method
+  extend ActiveSupport::Concern
+
+  included do
+    rescue_from ActiveRecord::RecordNotFound do |e|
+      json_response({ message: e.message }, :not_found)
+    end
+    rescue_from Pundit::NotAuthorizedError do |_e|
+      json_response({ message: 'You are not allowed to perform this action' }, 403)
+    end
+    rescue_from ActiveRecord::RecordInvalid do |e|
+      json_response({ message: e.message }, :unprocessable_entity)
     end
   end
-  
+end

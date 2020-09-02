@@ -9,9 +9,7 @@ class ApplicationPolicy
   end
 
   def user_permissions
-    perms = @user.roles.select(:permissions).distinct.map(&:permissions).flatten
-    p perms
-    perms
+    @user.roles.select(:permissions).distinct.map(&:permissions).flatten
   end
 
   def inferred_activity(method)
@@ -20,9 +18,6 @@ class ApplicationPolicy
 
   def method_missing(name, *args)
     if name.to_s.last == '?'
-      p name
-      p inferred_activity(name.to_s.gsub('?', ''))
-      p user_permissions
       user_permissions.include?(inferred_activity(name.to_s.gsub('?', '')))
     else
       super

@@ -5,6 +5,7 @@
 class AuthenticationController < ApplicationController
   skip_before_action :authenticate_request
   skip_after_action :verify_authorized
+  skip_after_action :verify_policy_scoped
 
   def authenticate
     command = AuthenticateUser.call(params[:email], params[:password])

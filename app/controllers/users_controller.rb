@@ -4,15 +4,15 @@ class UsersController < ApplicationController
   before_action :set_user, only: %i[show update destroy]
   # GET /users
   def index
-    p 'here'
-    # @users = User.all
-    @users = policy_scope(User)
+    @users = User.all
+    authorize @users.first, :index?
     json_response(@users, :ok)
   end
 
   # POST /users
   def create
     @user = User.new(user_params)
+    authorize @user, :create?
     @user.status = 0
     if @user.save!
       @user.reload
@@ -27,7 +27,6 @@ class UsersController < ApplicationController
 
   # GET /users/:id
   def show
-    p 'here2'
     json_response(@user)
   end
 

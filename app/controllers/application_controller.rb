@@ -13,14 +13,11 @@ class ApplicationController < ActionController::API
   # Authenticate all requests
   before_action :authenticate_request
 
-  # Globally rescue Authorization Errors in controller.
-  # Returning 403 Forbidden if permission is denied
-  rescue_from Pundit::NotAuthorizedError, with: :permission_denied
-
   # Enforces access right checks for individuals resources
   after_action :verify_authorized, except: :index
+
   # Enforces access right checks for collections
-  after_action :verify_policy_scoped
+  after_action :verify_policy_scoped, only: :index
 
   attr_reader :current_user
 
@@ -28,14 +25,8 @@ class ApplicationController < ActionController::API
 
   def authenticate_request
     @current_user = AuthorizeApiRequest.call(request.headers).result
-    p current_user
-    render json: { error: 'Not Authorized' }, status: 401 unless @current_user
-  end
-
-  def permission_denied
     unless @current_user
-      render json: { error: 'Permission denied' }, status: 403
+      render json: { error: 'Not Authenticated' }, status: 401
     end
-    # head 403
   end
 end
