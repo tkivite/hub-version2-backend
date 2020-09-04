@@ -20,17 +20,20 @@ class RolesController < ApplicationController
 
   # GET /roles/:id
   def show
+    authorize @role, :show?
     json_response(@role)
   end
 
   # PUT /roles/:id
   def update
+    authorize @role, :update?
     @role.update!(role_params)
     json_response(@role)
   end
 
   # DELETE /roles/:id
   def destroy
+    authorize @role, :delete?
     @role.destroy
     json_response(@roles)
   end

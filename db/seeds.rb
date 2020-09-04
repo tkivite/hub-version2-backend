@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 dev_role = Role.find_by(name: 'Developer')
+permissions = '[ user:create,user:list,user:show,user:update,role:create,role:list,role:show,role:update,assignment:list]'
 unless dev_role.present?
   dev_role = Role.create!(
     name: 'Developer',
+    permissions:permissions,
     created_by: '0'
   )
   # dev_user.super_user!
-
   p "Developer role: #{dev_role.name}"
 end
 dev_user = User.find_by(email: 'devops@lipalater.com')
