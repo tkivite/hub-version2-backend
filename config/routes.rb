@@ -14,4 +14,8 @@ Rails.application.routes.draw do
   end
   resources :assignments do
   end
+  resources :partners do
+  end
+  resources :stores do
+  end
 end

@@ -10,7 +10,7 @@ class CreateStore < ActiveRecord::Migration[6.0]
       t.integer :no_of_employess
       t.float :monthly_revenue
       t.string :city
-      t.integer :core_id
+      t.uuid :core_id
       t.string :country
       t.integer :status
       t.timestamps

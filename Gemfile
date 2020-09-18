@@ -25,7 +25,10 @@ gem 'simple_command'
 gem 'pundit'
 
 gem 'em-http-request' # required by SendMessages wrapper
+gem 'rest-client' 
 gem 'sidekiq'
+
+gem 'will_paginate'
 
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.4.2', require: false

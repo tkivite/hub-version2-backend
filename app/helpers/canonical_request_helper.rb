@@ -42,6 +42,8 @@ module CanonicalRequestHelper
       Rails.logger.info "Canonical Request String: #{request_string}"
       Rails.logger.info "API Secret: #{api_secret}"
       Rails.logger.info "Computed Signature: #{base64_signature}"
+
+      lipalater_core_base_url = (lipalater_core_base_url[-1] == "/")? lipalater_core_base_url : lipalater_core_base_url + "/"
       begin
         if request_method.downcase.include?('get')
           begin
