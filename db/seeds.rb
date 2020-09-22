@@ -1,11 +1,35 @@
 # frozen_string_literal: true
 
+partner = Partner.find_by(name: 'Lipalater-HQ')
+unless partner.present?
+  partner = Partner.create!(
+    name: 'Lipalater-HQ',
+    year_of_incorporation: '2014',
+    speciality: 'HQ',
+    location: 'Nairobi'
+  )
+  # dev_user.super_user!
+  p "Partner created: #{partner.name}"
+end
+
+store = Store.find_by(name: 'Lipalater-Nairobi')
+unless store.present?
+  store = Store.create!(
+    name: 'Lipalater-HQ',
+    partner_id: partner.id,
+    store_key: 'lipalater-nairobi',
+    country: 'Kenya'
+  )
+  # dev_user.super_user!
+  p "Store created: #{store.name}"
+end
+
 dev_role = Role.find_by(name: 'Developer')
 permissions = '[ user:create,user:list,user:show,user:update,role:create,role:list,role:show,role:update,assignment:list]'
 unless dev_role.present?
   dev_role = Role.create!(
     name: 'Developer',
-    permissions:permissions,
+    permissions: permissions,
     created_by: '0'
   )
   # dev_user.super_user!
@@ -23,7 +47,8 @@ unless dev_user.present?
     created_by: 0,
     last_login_time: '2020-08-25 15:07:49',
     logged_in: false,
-    status: 1
+    status: 1,
+    store_id: store.id
   )
   # dev_user.super_user!
 
