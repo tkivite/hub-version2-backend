@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_16_125756) do
+ActiveRecord::Schema.define(version: 2020_09_22_133257) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -25,6 +25,29 @@ ActiveRecord::Schema.define(version: 2020_09_16_125756) do
     t.uuid "role_id"
     t.index ["role_id"], name: "index_assignments_on_role_id"
     t.index ["user_id"], name: "index_assignments_on_user_id"
+  end
+
+  create_table "collections", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "customer_names"
+    t.string "customer_phone_number"
+    t.string "customer_id_number"
+    t.datetime "time_collected"
+    t.string "item"
+    t.string "collected_by_name"
+    t.string "collected_by_id_number"
+    t.string "verification_code"
+    t.string "status"
+    t.string "receipt"
+    t.string "item_code"
+    t.string "collection_notes"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.uuid "store_id"
+    t.uuid "sale_id"
+    t.uuid "user_id"
+    t.index ["sale_id"], name: "index_collections_on_sale_id"
+    t.index ["store_id"], name: "index_collections_on_store_id"
+    t.index ["user_id"], name: "index_collections_on_user_id"
   end
 
   create_table "contacts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -73,6 +96,39 @@ ActiveRecord::Schema.define(version: 2020_09_16_125756) do
     t.float "rank"
     t.text "permissions", default: [], array: true
     t.uuid "created_by"
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+  end
+
+  create_table "sales", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "customer_names"
+    t.string "customer_email"
+    t.string "customer_phone_number"
+    t.string "customer_id_number"
+    t.string "buying_price"
+    t.string "approved_amount"
+    t.string "item"
+    t.string "item_type"
+    t.string "item_description"
+    t.string "sales_agent"
+    t.string "store"
+    t.string "pick_up_type"
+    t.string "source_id"
+    t.string "created_by"
+    t.string "status", default: "pending"
+    t.string "pick_up_option"
+    t.string "external_id"
+    t.datetime "collected_at"
+    t.float "approved_monthly_installment"
+    t.float "repayment_period"
+    t.float "interest_rate"
+    t.datetime "payment_start_date"
+    t.string "released_item_id"
+    t.string "item_code"
+    t.float "item_topup_amount"
+    t.string "item_topup_ref"
+    t.float "customer_limit"
+    t.string "customer_country"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
@@ -131,6 +187,9 @@ ActiveRecord::Schema.define(version: 2020_09_16_125756) do
 
   add_foreign_key "assignments", "roles"
   add_foreign_key "assignments", "users"
+  add_foreign_key "collections", "sales"
+  add_foreign_key "collections", "stores"
+  add_foreign_key "collections", "users"
   add_foreign_key "partners", "users", column: "account_manager_id"
   add_foreign_key "partners", "users", column: "creator_id"
   add_foreign_key "reset_tokens", "users"
