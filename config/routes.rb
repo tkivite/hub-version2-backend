@@ -18,4 +18,8 @@ Rails.application.routes.draw do
   end
   resources :stores do
   end
+  resources :contacts do
+  end
+  resources :store_accounts do
+  end
 end
