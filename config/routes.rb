@@ -20,4 +20,10 @@ Rails.application.routes.draw do
   end
   resources :stores do
   end
+
+  namespace :api do
+    namespace :v1 do
+      post 'disbursed/auto_release' => 'disburseds#auto_release'
+    end
+  end
 end

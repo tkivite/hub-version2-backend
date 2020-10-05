@@ -25,6 +25,15 @@ module HubV2Backend
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 6.0
+    config.autoloader = :classic
+
+    # Logger config
+
+    # Autoload lib files
+    # config.autoload_paths += %W(#{config.root}/lib)
+    config.autoload_paths += %W[#{config.root}/app/lib]
+    config.autoload_paths << Rails.root.join('lib')
+
     load_path_strategy = Rails.env.production? ? :eager_load_paths : :autoload_paths
     config.public_send(load_path_strategy) << Rails.root.join('lib')
 

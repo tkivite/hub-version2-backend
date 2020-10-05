@@ -2,7 +2,7 @@
 
 class Api::V1::DisbursedsController < Api::DisbursedController
   require 'sendgrid-ruby'
-  require 'text-table'
+  # require 'text-table'
   include SendGrid
 
   def auto_release
@@ -27,7 +27,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       # p item.to_json
       customer = item['customer']
       country = item['country']
-      credit_limit_detail= item['credit_limit_detail']
+      credit_limit_detail = item['credit_limit_detail']
       customer_limit = credit_limit_detail['available_limit']
       store = item['partner_store']['store_key']
       p customer
@@ -60,10 +60,10 @@ class Api::V1::DisbursedsController < Api::DisbursedController
         puts msg
         puts '-------------------------------------------------------------------------------------------------------------------'
 
-        SendNotificationToSlackWorker.perform_async(msg)
+        # SendNotificationToSlackWorker.perform_async(msg)
 
         # logic to notify partner and team of new release
-        current_store = Store.find_by(source_id: store)
+        current_store = Store.find_by(store_key: store)
 
         if current_store.nil?
           # could not find store
@@ -108,7 +108,9 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     sale = sales[0]
     from = 'contracts@lipalater.com'
     tos = [sale.customer_email]
-    bccs = ['disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'tkivite@lipalater.com', 'hzare@lipalater.com', 'dorare@lipalater.com', 'customers@lipalater.com']
+    bccs = ['tkivite@lipalater.com']
+
+    # bccs = ['disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'tkivite@lipalater.com', 'hzare@lipalater.com', 'dorare@lipalater.com', 'customers@lipalater.com']
     subject = 'Your Lipa Later Facility Details'
     email_payload = {}
     email_payload['to'] = tos.join(',')
@@ -241,7 +243,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       end
       # table = '</tbody></table'
 
-      current_store = Store.find_by(source_id: key)
+      current_store = Store.find_by(store_key: key)
       # item_brand = sale.item_type
       # item_description = sale.item_description
       # buying_price = sale.buying_price
@@ -250,20 +252,25 @@ class Api::V1::DisbursedsController < Api::DisbursedController
 
       account_manager_email = 'wnzisa@lipalater.com'
       partner = Partner.find_by(id: current_store.partner_id)
-      account_manager = User.find_by(id: partner.account_manager)
+      account_manager = User.find_by(id: partner.account_manager_id)
 
-      account_manager_email = account_manager.email if !account_manager.nil? && !account_manager.email.nil?
+      if !account_manager.nil? && !account_manager.email.nil?
+        account_manager_email = account_manager.email
+      end
 
-      subject = "ITEMS FOR RELEASE - #{current_store.source_id.upcase} (#{Time.now.strftime('%d/%m/%Y')})"
-      tos = [current_store.disburse_email]
+      subject = "ITEMS FOR RELEASE - #{current_store.store_key.upcase} (#{Time.now.strftime('%d/%m/%Y')})"
+      # tos = [current_store.disburse_email]
+      tos = ['tkivite@lipalater.com']
       # ccs = ['mmaina@odysseyafricapital.com']
       ccs = ['tkivite@gmail.com']
-      ccs << current_store.disburse_email_cc1.split(',') unless current_store.disburse_email_cc1.nil?
+      # unless current_store.disburse_email_cc1.nil?
+      #   ccs << current_store.disburse_email_cc1.split(',')
+      # end
       # ccs.push('tkivite@gmail.com')
-      # bccs = []
+      bccs = []
       # ccs.push(')
-      bccs = ['disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'hzare@lipalater.com',
-              'customers@lipalater.com', 'romwodo@lipalater.com']
+      # bccs = ['disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'hzare@lipalater.com',
+      #         'customers@lipalater.com', 'romwodo@lipalater.com']
       bccs.push(account_manager_email)
 
       store_msg = 'Kindly note that the following items will be collected from your store'
@@ -273,7 +280,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       store_msg += "\n\n RELEASED ITEMS  "
       store_msg += "\n______________________________________"
 
-      store_msg += item_data     
+      store_msg += item_data
       puts '***Sending Partner Email'
       email_payload = {
         'subject' => subject,
@@ -346,7 +353,9 @@ class Api::V1::DisbursedsController < Api::DisbursedController
           partner = Partner.find_by(id: sale_store.partner_id)
           account_manager = User.find_by(id: partner.account_manager)
           account_manager_email = 'tkivite@lipalater.com'
-          account_manager_email = account_manager.email unless account_manager.nil? || account_manager.email.nil?
+          unless account_manager.nil? || account_manager.email.nil?
+            account_manager_email = account_manager.email
+          end
 
           to = [sale_store.manager_email, sale_store.disburse_email, sale_store.disburse_email_cc1,
                 'mmaina@odysseyafricapital.com', 'disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'customers@lipalater.com', account_manager_email]

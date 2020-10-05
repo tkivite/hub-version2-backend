@@ -25,8 +25,10 @@ gem 'simple_command'
 gem 'pundit'
 
 gem 'em-http-request' # required by SendMessages wrapper
-gem 'rest-client' 
+gem 'rest-client'
 gem 'sidekiq'
+
+gem 'sendgrid-ruby'
 
 gem 'will_paginate'
 
