@@ -13,6 +13,6 @@ class CreateStoreAccounts < ActiveRecord::Migration[6.0]
       t.string :other_details
       t.timestamps
     end
-    add_reference(:store_accounts, :stores, type: :uuid, foreign_key: true)
+    add_reference(:store_accounts, :store, type: :uuid, foreign_key: true)
   end
 end

@@ -6,6 +6,6 @@ class Store < ApplicationRecord
   has_many :users, dependent: :destroy
   belongs_to :partner
   # validations
-  validates :name, :partner_id, :store_key, :country, presence: true
+  validates :name, :store_key, :country, presence: true
   validates :name, uniqueness: true
 end

@@ -4,5 +4,5 @@ class Contact < ApplicationRecord
   # model association
 
   # validations
-  validates :type, :title, :mobile, :email, presence: true
+  validates :type, :name, :title, :mobile, :email, presence: true
 end

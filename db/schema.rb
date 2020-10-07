@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_22_133257) do
+ActiveRecord::Schema.define(version: 2020_09_22_133258) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -36,7 +36,7 @@ ActiveRecord::Schema.define(version: 2020_09_22_133257) do
     t.string "collected_by_name"
     t.string "collected_by_id_number"
     t.string "verification_code"
-    t.string "status"
+    t.integer "status"
     t.string "receipt"
     t.string "item_code"
     t.string "collection_notes"
@@ -144,8 +144,8 @@ ActiveRecord::Schema.define(version: 2020_09_22_133257) do
     t.string "other_details"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.uuid "stores_id"
-    t.index ["stores_id"], name: "index_store_accounts_on_stores_id"
+    t.uuid "store_id"
+    t.index ["store_id"], name: "index_store_accounts_on_store_id"
   end
 
   create_table "stores", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -156,7 +156,7 @@ ActiveRecord::Schema.define(version: 2020_09_22_133257) do
     t.integer "no_of_employess"
     t.float "monthly_revenue"
     t.string "city"
-    t.integer "core_id"
+    t.uuid "core_id"
     t.string "country"
     t.integer "status"
     t.datetime "created_at", precision: 6, null: false
@@ -193,7 +193,7 @@ ActiveRecord::Schema.define(version: 2020_09_22_133257) do
   add_foreign_key "partners", "users", column: "account_manager_id"
   add_foreign_key "partners", "users", column: "creator_id"
   add_foreign_key "reset_tokens", "users"
-  add_foreign_key "store_accounts", "stores", column: "stores_id"
+  add_foreign_key "store_accounts", "stores"
   add_foreign_key "stores", "partners"
   add_foreign_key "stores", "users", column: "creator_id"
   add_foreign_key "users", "stores"

@@ -42,7 +42,7 @@ class RolesController < ApplicationController
 
   def role_params
     # whitelist params
-    params.permit(:name, :role_type, :rank,:permissions)
+    params.permit(:name, :role_type, :rank, :permissions)
   end
 
   def set_role
