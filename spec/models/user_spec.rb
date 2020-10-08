@@ -15,7 +15,12 @@ RSpec.describe User, type: :model do
       expect(build(:user)).to be_valid
     end
   end
-  context 'validations' do
+  describe 'Associations' do
+    it { should have_many(:assignments) }
+    it { should have_many(:reset_tokens) }
+    it { should have_many(:roles) }
+  end
+  describe 'validations' do
     before { create(:user) }
     context 'presence' do
       it { should validate_presence_of(:firstname) }
@@ -24,15 +29,26 @@ RSpec.describe User, type: :model do
       it { should validate_presence_of(:email) }
       it { should validate_presence_of(:mobile) }
     end
+    context 'email' do
+      it { should allow_value('email@addresse.foo').for(:email) }
+      it { should_not allow_value('foo').for(:email) }
+    end
+
     context 'uniqueness' do
       it { should validate_uniqueness_of(:email).case_insensitive }
       it { should validate_uniqueness_of(:mobile).case_insensitive }
     end
   end
-
-  # context 'user should have role' do
-  #   assert_not(@subject.role?(:admin))
-  #   @subject.roles << Role.new(name: 'admin')
-  #   assert(@subject.role?(:admin))
-  # end
+  describe 'Enum Constraints' do
+    it { should define_enum_for(:status).with_values(%i[pending active inactive deactivated deleted]) }
+  end
+  describe 'model methods' do
+    it 'tests the model methods' do
+      @user = FactoryBot.create(:user)
+      expect(@user.role?('create:role')).to eq(false)
+      expect(@user.generate_token).to_not eq(nil)
+    end
+  end
 end
+
+# frozen_string_literal: true

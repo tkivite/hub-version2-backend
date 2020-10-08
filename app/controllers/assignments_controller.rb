@@ -14,8 +14,12 @@ class AssignmentsController < ApplicationController
   def create
     @assignment = Assignment.new(assignment_params)
     authorize @assignment, :create?
-    json_response(@assignment, :internal_error) unless @Assignment.save
-    json_response(@assignment, :created)
+
+    if @assignment.save
+      json_response(@assignment, :created)
+    else
+      json_response(@assignment, :unprocessable_entity)
+    end
   end
 
   # GET /assignments/:id

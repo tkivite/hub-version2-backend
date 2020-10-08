@@ -25,14 +25,29 @@ class User < ApplicationRecord
   end
 
   def generate_token
-    self.reset_tokens.update_all(used: true)
+    reset_tokens.update_all(used: true)
     token = SecureRandom.hex(10)
     reset_token = ResetToken.new
-    reset_token.user_id = self.id
+    reset_token.user_id = id
     reset_token.token = token
     reset_token.used = false
-    reset_token.expiration =  Time.now.utc + 24.hours
+    reset_token.expiration = Time.now.utc + 24.hours
     reset_token.save!
     token
+  end
+
+  def authorization_token
+    command = AuthenticateUser.call(email, password)
+
+    if command.success?
+      # p command.result
+      command.result[:access_token]
+
+      # { json: command.result }
+      # render json: { auth_token: command.result }
+    else
+      'unauthorised'
+      # { json: { error: command.errors }, status: :unauthorized }
+    end
   end
 end

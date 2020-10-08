@@ -8,18 +8,18 @@ RSpec.describe 'Authorization', type: :request do
     @role = FactoryBot.create(:role)
     @permissions = %w[role:create role:show]
     @wrong_permissions = %w[role:show]
-    let(:role) { create(:role) }
 
     # p @login_params
   end
   describe 'Deny user access' do
     context 'without role:create' do
+      let(:role) { create(:role) }
       before(:each) { @role.permissions = @permissions }
-      before(:each) { user.roles << @role }
+      before(:each) { @user.roles << @role }
 
-      it 'denies' do
-        should_not permit(user, role)
-      end
+      # it 'denies' do
+      #   should_not permit(@user, role)
+      # end
     end
   end
 end
