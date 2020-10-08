@@ -80,3 +80,23 @@ roles_list = [
 roles_list.each_with_index do |role, num|
   Role.create!(name: role[0], created_by: dev_user.id, rank: (num + 1), role_type: role[2])
 end
+
+sale = Sale.find_by(external_id: 'e1814f76-fdc5-442d-a9a2-47b2559eda9')
+permissions = '[ user:create,user:list,user:show,user:update,role:create,role:list,role:show,role:update,assignment:list]'
+unless sale.present?
+  Sale.create!(
+    customer_names:"Jamie Bayer"
+    customer_email:"cassey@mcclure.com",
+    customer_phone_number:"719840515",
+    customer_id_number:"9804194429086",
+    buying_price:"8000.0",
+    item:"tablet",
+    store: store.store_key
+    item_type:"ASUS",
+    pick_up_option:"delivery",
+    external_id:"e1814f76-fdc5-442d-a9a2-47b2559eda9",
+    released_item_id:"e1814f76-fdc5-442d-a9a2-47b2559eda9",
+    item_topup_amount:0.0,
+    customer_limit:303086.0,
+    customer_country:"KE")
+  end

@@ -22,7 +22,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     saved_released_items.each_with_index do |item, index|
       p "************************ ITEM: #{index} *********************************"
       p item
-      item = JSON.parse(item)
+      item = JSON.parse(item.to_json)
       # p item
       # p item.to_json
       customer = item['customer']
