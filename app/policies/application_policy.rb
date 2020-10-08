@@ -9,12 +9,12 @@ class ApplicationPolicy
   end
 
   def user_permissions
-    p @user.roles.select(:permissions).distinct.map(&:permissions).flatten
+    # @user.roles.select(:permissions).distinct.map(&:permissions).flatten
     @user.roles.select(:permissions).distinct.map(&:permissions).flatten
   end
 
   def inferred_activity(method)
-    p "#{@record.class.name.downcase}:#{method}"
+    # p "#{@record.class.name.downcase}:#{method}"
     "#{@record.class.name.downcase}:#{method}"
   end
 

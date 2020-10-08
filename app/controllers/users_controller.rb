@@ -15,15 +15,12 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
     authorize @user, :create?
     @user.status = 0
-    if @user.save!
-      @user.reload
-      token = @user.generate_token
-      payload = generate_email_payload(@user, token)
-      NotificationMailerWorker.perform_async(payload)
-      json_response(@user, :created)
-    else
-      json_response(@user, :internal_error)
-    end
+    return  json_response(@user, :unprocessable_entity) unless @user.save!
+    @user.reload
+    token = @user.generate_token
+    payload = generate_email_payload(@user, token)
+    NotificationMailerWorker.perform_async(payload)
+    json_response(@user, :created)    
   end
 
   # GET /users/:id
@@ -36,12 +33,12 @@ class UsersController < ApplicationController
   def update
     authorize @user, :update?
     @user.update!(user_params)
-    json_response(@user)
+    json_response(@user, :ok)
   end
 
   # DELETE /users/:id
   def destroy
-    authorize @user, :delete?
+    authorize @user, :destroy?
     @user.destroy
     # @users = User.all
     json_response(@users)
@@ -54,7 +51,11 @@ class UsersController < ApplicationController
 
   def user_params
     # whitelist params
-    params.permit(:firstname, :othernames, :gender, :email, :password, :mobile, :status)
+    params.permit(:id,:firstname, :othernames, :gender, :email, :password, :mobile, :status, :created_by)
+  end
+
+  def set_user
+    @user = User.find(params[:id])
   end
 
   def generate_email_payload(user, token)

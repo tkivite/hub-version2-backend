@@ -66,6 +66,7 @@ GEM
     concurrent-ruby (1.1.7)
     connection_pool (2.2.3)
     cookiejar (0.3.3)
+    crack (0.4.4)
     crass (1.0.6)
     database_cleaner (1.8.5)
     database_cleaner-active_record (1.8.0)
@@ -93,6 +94,7 @@ GEM
     ffi (1.13.1)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
+    hashdiff (1.0.1)
     http-accept (1.7.0)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
@@ -218,6 +220,10 @@ GEM
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.7)
+    webmock (2.3.2)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
+      hashdiff
     websocket-driver (0.7.3)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
@@ -251,6 +257,7 @@ DEPENDENCIES
   spring-watcher-listen (~> 2.0.0)
   timecop
   tzinfo-data
+  webmock
   will_paginate
 
 RUBY VERSION

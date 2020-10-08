@@ -7,34 +7,40 @@ class StoresController < ApplicationController
   # GET /stores
   def index
     # searchKey = params[:searchkey].upcase
-    authorize Store.first, :list?   
-    dataparams = JSON.parse params[:dataparams]
-    puts "Data Params: #{dataparams}"
-    search_key = dataparams['searchKey'].upcase
-    page = dataparams['page']
-    stores = Store.where("concat_ws(' ' , UPPER(name),UPPER(store_key)) LIKE ?", "%#{search_key}%").order(created_at: :desc)
-    stores_filtered = stores.paginate(page: page, per_page: 25)
+    authorize Store.first, :list? 
+    stores = Store.all
+    stores_filtered = stores.paginate(page: 1, per_page: 25)
     policy_scope stores
     render json: { stores: stores_filtered.as_json(include: { partner: { only: :name } }), total_records: stores.count }, status: :ok
-  end
 
-  def lipalater
-    authorize Store.first, :list?   
-    dataparams = JSON.parse params[:dataparams]
-    Rails.logger.info "Fetching lipalater Data Params: #{dataparams}"
-    search_key = dataparams['searchKey'].upcase
-    stores = Store.where("partner_id in (select id from partners where name::varchar like ?) and concat_ws(' ' , UPPER(name),UPPER(store_key)) LIKE ?", '%ipalater%', "%#{search_key}%").order(created_at: :desc)
-    stores_filtered = stores.paginate(page: params[:page], per_page: 25)
-    policy_scope stores
-    render json: { stores: stores_filtered.to_json(include: { partner: { only: :name } }), total_records: stores.count }, status: :ok
-  end
 
-  def stores
     # dataparams = JSON.parse params[:dataparams]
-    stores = Store.all
-    policy_scope stores
-    render json: { stores: stores.to_json(include: { partner: { only: :name } }), total_records: stores.count }, status: :ok
+    # puts "Data Params: #{dataparams}"
+    # search_key = dataparams['searchKey'].upcase
+    # page = dataparams['page']
+    # stores = Store.where("concat_ws(' ' , UPPER(name),UPPER(store_key)) LIKE ?", "%#{search_key}%").order(created_at: :desc)
+    # stores_filtered = stores.paginate(page: page, per_page: 25)
+    # policy_scope stores
+    # render json: { stores: stores_filtered.as_json(include: { partner: { only: :name } }), total_records: stores.count }, status: :ok
   end
+
+  # def lipalater
+  #   authorize Store.first, :list?   
+  #   dataparams = JSON.parse params[:dataparams]
+  #   Rails.logger.info "Fetching lipalater Data Params: #{dataparams}"
+  #   search_key = dataparams['searchKey'].upcase
+  #   stores = Store.where("partner_id in (select id from partners where name::varchar like ?) and concat_ws(' ' , UPPER(name),UPPER(store_key)) LIKE ?", '%ipalater%', "%#{search_key}%").order(created_at: :desc)
+  #   stores_filtered = stores.paginate(page: params[:page], per_page: 25)
+  #   policy_scope stores
+  #   render json: { stores: stores_filtered.to_json(include: { partner: { only: :name } }), total_records: stores.count }, status: :ok
+  # end
+
+  # def stores
+  #   # dataparams = JSON.parse params[:dataparams]
+  #   stores = Store.all
+  #   policy_scope stores
+  #   render json: { stores: stores.to_json(include: { partner: { only: :name } }), total_records: stores.count }, status: :ok
+  # end
 
   # POST /stores
   def create
@@ -52,7 +58,7 @@ class StoresController < ApplicationController
     }
     response = prepare_canonical_request('POST', 'create_store', postdata.as_json)
     response = ActiveSupport::JSON.decode(response.body)
-    json_response({ status: false, description: 'could not create on core' }, :error) unless response['status'] == true
+    return json_response({ status: false, description: 'could not create on core' }, :error) unless response['status'] == true
     @store.update_attribute(:core_id, response['record_id'])
     email_payload = generate_email_payload(@store)
     NotificationMailerWorker.perform_async(email_payload)
@@ -61,7 +67,7 @@ class StoresController < ApplicationController
 
   # GET /stores/:id
   def show
-    authorize @store, :show? 
+    authorize @store, :view? 
     json_response(@store)
   end
 
@@ -87,6 +93,7 @@ class StoresController < ApplicationController
 
   # DELETE /stores/:id
   def destroy
+    authorize @store, :destroy? 
     @store.destroy
     @stores = Store.all
     json_response(@stores)
@@ -96,8 +103,8 @@ class StoresController < ApplicationController
 
   def store_params
     # whitelist params
-    params.permit(:name, :store_key, :location, :target, :partner_id, :no_of_employess,
-                  :monthly_revenue, :city, :country)
+    params.permit(:id,:name, :store_key, :location, :target, :partner_id, :no_of_employess,
+                  :monthly_revenue, :city, :country,:creator_id)
   end
 
   def set_store

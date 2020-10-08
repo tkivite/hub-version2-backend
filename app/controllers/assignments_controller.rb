@@ -30,7 +30,7 @@ class AssignmentsController < ApplicationController
 
   # PUT /assignments/:id
   def update
-    @Assignment.update!(assignment_params)
+    @assignment.update(assignment_params)
     authorize @assignment
     json_response(@assignment)
   end
@@ -38,7 +38,7 @@ class AssignmentsController < ApplicationController
   # DELETE /assignments/:id
   def destroy
     authorize @assignment
-    @Assignment.destroy
+    @assignment.destroy
     json_response(@assignments)
   end
 
@@ -46,7 +46,7 @@ class AssignmentsController < ApplicationController
 
   def assignment_params
     # whitelist params
-    params.permit(:user_id, :role_id)
+    params.permit(:id,:user_id, :role_id)
   end
 
   def set_assignment

@@ -47,6 +47,10 @@ RSpec.describe User, type: :model do
       @user = FactoryBot.create(:user)
       expect(@user.role?('create:role')).to eq(false)
       expect(@user.generate_token).to_not eq(nil)
+      expect(@user.authorization_token).to_not eq(nil)      
+      expect(@user.authorization_token).to_not eq('unauthorised')
+      @user.password = 'ww-pass'
+      expect(@user.authorization_token).to eq('unauthorised')
     end
   end
 end
