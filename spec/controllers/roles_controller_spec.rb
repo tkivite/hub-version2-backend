@@ -2,29 +2,25 @@
 
 require 'rails_helper'
 
-RSpec.describe UsersController, type: :controller do
+RSpec.describe RolesController, type: :controller do
   before(:each) do
     # Accepted a permissions
-    @permissions = %w[user:create user:update user:view user:list user:destroy]
+    @permissions = %w[role:create role:update role:view role:list role:destroy]
     # Disallowed
     @d_permissions = %w[create:role update:role]
     # Create role
-    @role = FactoryBot.create(:role)
-    # Create user
+    @login_user_role = FactoryBot.create(:role)
+    # Create role
     @logged_in_user = FactoryBot.create(:user)
     @a_user = FactoryBot.create(:user1)
-    @role.permissions = @permissions
-    @logged_in_user.roles << @role
-    @user = FactoryBot.create(:user2)
-    @user.created_by = @logged_in_user.id
+    @login_user_role.permissions = @permissions
+    @logged_in_user.roles << @login_user_role
+    @role = FactoryBot.create(:role1)
+    @role.created_by = @logged_in_user.id
 
     @valid_params = {
-      firstname: 'demo3',
-      othernames: 'use3r',
-      gender: 'Male',
-      email: 'demouser31@demo.test',
-      password: 'password',
-      mobile: '0725475056',
+      name: 'demo3',
+      permissions: %w[role:show role:create role:update],
       created_by: @logged_in_user.id
     }
 
@@ -34,9 +30,9 @@ RSpec.describe UsersController, type: :controller do
     request.headers['Authorization'] = @logged_in_user.authorization_token
   end
 
-  describe 'POST create user' do
+  describe 'POST create role' do
     context 'with valid params' do
-      it 'successfully creates a user' do
+      it 'successfully creates a role' do
         post :create, params: @valid_params, as: :json
         expect(response).to be_successful
         b = JSON.parse(response.body)
@@ -44,10 +40,7 @@ RSpec.describe UsersController, type: :controller do
         p b
         expect(b['id']).to_not eq(nil)
         expect(b['created_by']).to eq(@logged_in_user.id)
-        expect(b['status']).to eq('pending')
-        expect(b['firstname']).to eq('demo3')
-        expect(b['email']).to eq('demouser31@demo.test')
-        expect(b['mobile']).to eq('0725475056')
+        expect(b['permissions']).to eq(%w[role:show role:create role:update])
       end
     end
 
@@ -62,10 +55,10 @@ RSpec.describe UsersController, type: :controller do
     end
     context 'with wrong permissions' do
       it 'return not allowed message' do
-        @role.permissions = ''
+        @login_user_role.permissions = ''
         @logged_in_user.roles = []
-        @role.permissions = @d_permissions
-        @logged_in_user.roles << @role
+        @login_user_role.permissions = @d_permissions
+        @logged_in_user.roles << @login_user_role
         post :create, params: @valid_params, as: :json
         expect(response).to have_http_status(403)
         expect(response).to_not be_successful
@@ -84,10 +77,10 @@ RSpec.describe UsersController, type: :controller do
       end
       context 'with wrong permissions' do
         it 'return not allowed message' do
-          @role.permissions = ''
+          @login_user_role.permissions = ''
           @logged_in_user.roles = []
-          @role.permissions = @d_permissions
-          @logged_in_user.roles << @role
+          @login_user_role.permissions = @d_permissions
+          @logged_in_user.roles << @login_user_role
           get :index
           expect(response).to have_http_status(403)
           expect(response).to_not be_successful
@@ -100,8 +93,8 @@ RSpec.describe UsersController, type: :controller do
 
   describe 'GET show' do
     context 'with valid params' do
-      it 'successfully returns the created user' do
-        get :show, params: { id: @user.id }
+      it 'successfully returns the created role' do
+        get :show, params: { id: @role.id }
         expect(response).to be_successful
         expect(response).to have_http_status(:ok)
       end
@@ -114,12 +107,12 @@ RSpec.describe UsersController, type: :controller do
     end
     context 'with wrong permissions' do
       it 'return not allowed message' do
-        @role.permissions = ''
+        @login_user_role.permissions = ''
         @logged_in_user.roles = []
-        @role.permissions = @d_permissions
-        @logged_in_user.roles << @role
+        @login_user_role.permissions = @d_permissions
+        @logged_in_user.roles << @login_user_role
 
-        response = get :show, params: { id: @user.id }
+        response = get :show, params: { id: @role.id }
         expect(response).to have_http_status(403)
         expect(response).to_not be_successful
         b = JSON.parse response.body
@@ -130,41 +123,39 @@ RSpec.describe UsersController, type: :controller do
 
   describe 'PUT #update' do
     context 'with valid params' do
-      before (:each) do
-        put :update, params: { id: @user.id, created_by: @a_user.id,
-                               firstname: 'updatedfirstname', othernames: 'updated_name', email: 'changedemail@email.mail' }
+      before(:each) do
+        put :update, params: { id: @role.id, created_by: @a_user.id,
+                               name: 'updatedname' }
       end
 
       it 'updates the record' do
         expect(response).to be_successful
         b = JSON.parse response.body
-        expect(b['id']).to eq(@user.id)
+        expect(b['id']).to eq(@role.id)
         expect(b['created_by']).to eq(@a_user.id)
-        expect(b['firstname']).to eq('updatedfirstname')
-        expect(b['email']).to eq('changedemail@email.mail')
-        expect(b['othernames']).to eq('updated_name')
+        expect(b['name']).to eq('updatedname')
         expect(response).to have_http_status(200)
       end
     end
     context 'with invalid params' do
       before (:each) do
         put :update, params: { id: 'nothing', created_by: @a_user.id,
-                               firstname: 'updatedfirstname', lastname: 'updated_name', email: 'changedemail@email.mail' }
+                               name: 'updatedname' }
       end
       it 'throws an error message' do
         expect(response).to have_http_status(:not_found)
-        # expect(response.body.downcase).to eq('No user info found'.downcase)
+        # expect(response.body.downcase).to eq('No role info found'.downcase)
       end
     end
     context 'with wrong permissions' do
       before (:each) do
-        @role.permissions = ''
+        @login_user_role.permissions = ''
         @logged_in_user.roles = []
-        @role.permissions = @d_permissions
-        @logged_in_user.roles << @role
+        @login_user_role.permissions = @d_permissions
+        @logged_in_user.roles << @login_user_role
 
-        put :update, params: { id: @user.id, created_by: @a_user.id,
-                               firstname: 'updatedfirstname', lastname: 'updated_name', email: 'changedemail@email.mail' }
+        put :update, params: { id: @role.id, created_by: @a_user.id,
+                               name: 'updatedname' }
       end
       it 'return not allowed message' do
         expect(response).to have_http_status(403)
@@ -178,7 +169,7 @@ RSpec.describe UsersController, type: :controller do
   describe 'DELETE #delete' do
     context 'with valid params' do
       before (:each) do
-        delete :destroy, params: { id: @user.id }
+        delete :destroy, params: { id: @role.id }
       end
 
       it 'deletes the record' do
@@ -197,12 +188,11 @@ RSpec.describe UsersController, type: :controller do
     end
     context 'with wrong permissions' do
       before (:each) do
-        @role.permissions = ''
+        @login_user_role.permissions = ''
         @logged_in_user.roles = []
-        @role.permissions = @d_permissions
-        @logged_in_user.roles << @role
-
-        delete :destroy, params: { id: @user.id }
+        @login_user_role.permissions = @d_permissions
+        @logged_in_user.roles << @login_user_role
+        delete :destroy, params: { id: @role.id }
       end
       it 'return not allowed message' do
         expect(response).to have_http_status(403)

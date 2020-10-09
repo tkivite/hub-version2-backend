@@ -14,13 +14,14 @@ class RolesController < ApplicationController
   def create
     @role = Role.new(role_params)
     authorize @role, :create?
-    json_response(@role, :internal_error) unless @role.save
+    return json_response(@role, :unprocessable_entity) unless @role.save
+
     json_response(@role, :created)
   end
 
   # GET /roles/:id
   def show
-    authorize @role, :show?
+    authorize @role, :view?
     json_response(@role)
   end
 
@@ -33,7 +34,7 @@ class RolesController < ApplicationController
 
   # DELETE /roles/:id
   def destroy
-    authorize @role, :delete?
+    authorize @role, :destroy?
     @role.destroy
     json_response(@roles)
   end
@@ -42,7 +43,7 @@ class RolesController < ApplicationController
 
   def role_params
     # whitelist params
-    params.permit(:name, :role_type, :rank, :permissions)
+    params.permit(:id, :name, :role_type, :rank, :created_by, permissions: [])
   end
 
   def set_role

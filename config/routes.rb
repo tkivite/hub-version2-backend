@@ -24,6 +24,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       post 'disbursed/auto_release' => 'disburseds#auto_release'
+      post 'disbursed/cancel_facilities' => 'disburseds#cancel_facilities'
     end
   end
 end

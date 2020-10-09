@@ -14,14 +14,14 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     # p saved_released_items
     # p params
     p '************************ Released Items  *********************************'
-    p saved_released_items
+    # p saved_released_items
     unless saved_released_items.present?
       Rails.logger.info 'We received an emty array of items for auto release'
       render json: { status: 'Success', message: 'No Items posted ' }, status: :ok
     end
     saved_released_items.each_with_index do |item, index|
       p "************************ ITEM: #{index} *********************************"
-      p item
+
       item = JSON.parse(item.to_json)
       # p item
       # p item.to_json
@@ -30,7 +30,6 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       credit_limit_detail = item['credit_limit_detail']
       customer_limit = credit_limit_detail['available_limit']
       store = item['partner_store']['store_key']
-      p customer
       external_id = item['id']
       new_sale = Sale.new
       new_sale.external_id = external_id
@@ -40,7 +39,6 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       new_sale.item_type = item['item_brand']
       new_sale.item_description = item['item_description']
       new_sale.store = store
-      new_sale.source_id = store
       new_sale.released_item_id = item['id']
       new_sale.customer_names = customer['first_name'] + ' ' + customer['last_name']
       new_sale.customer_email = customer['email']
@@ -52,13 +50,15 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       new_sale.item_topup_amount = item['item_topup']
       new_sale.item_topup_ref = item['topup_ref']
       new_sale.customer_limit = customer_limit
+      new_sale.approved_amount = customer_limit
       new_sale.customer_country = country['alpha_2_code']
       # new_sale.save!
       if new_sale.save
         puts '-------------------------------------------------------------------------------------------------------------------'
-        msg = "We have saved a new sale from core with the following details #{permitted_params}"
+        msg = 'We have saved a new sale from core with the following details '
+        # {permitted_params}"
         puts msg
-        puts '-------------------------------------------------------------------------------------------------------------------'
+        # puts '-------------------------------------------------------------------------------------------------------------------'
 
         # SendNotificationToSlackWorker.perform_async(msg)
 
@@ -133,7 +133,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       delivery_details += 'We will reach out to you soon to schedule the delivery/collection of your item(s)'
     elsif pick_up_option == 'pick_up' && (pick_up_type == 'customer_store_pickup' || pick_up_type == 'store_pick_up')
       # attempt to get location of store
-      current_store = Store.find_by(source_id: store)
+      current_store = Store.find_by(store_key: store)
       store_name = if !current_store.nil? && !current_store.location.nil?
                      current_store.location
                    else
@@ -142,7 +142,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       delivery_details = "We will reach out to you to schedule collection of your item(s) at our partner store : #{store_name}"
     elsif pick_up_option == 'pickup' && pick_up_type == 'customer_storepickup'
       # attempt to get location of store
-      current_store = Store.find_by(source_id: store)
+      current_store = Store.find_by(store_key: store)
       store_name = if !current_store.nil? && !current_store.location.nil?
                      current_store.location
                    else
@@ -220,8 +220,6 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       # table = '<table><thead><tr><th>Store</th><th>Item Details</th><th>Item Price</th><th>To be picked by</th></tr></thead><tbody>'
       item_data = ''
       p "preparing email for store: #{key}"
-      p 'Value'
-      p value
 
       value.each_with_index do |sale, index|
         sale_data = []
@@ -316,82 +314,62 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     saved_released_items.each_with_index do |item, _count|
       item_external_id = item
       sale = Sale.find_by(external_id: item_external_id)
+
       if sale.nil?
         not_found << item
         # Skip iteration
 
       elsif sale.status == 'pending'
-        # insert into cancelled
-        new_cancel = CancelledSale.new(customer_names: sale.customer_names, customer_phone_number: sale.customer_phone_number,
-                                       customer_email: sale.customer_email, customer_id_number: sale.customer_id_number,
-                                       buying_price: sale.buying_price, approved_amount: sale.buying_price, approved_monthly_installment: sale.approved_monthly_installment,
-                                       repayment_period: sale.repayment_period, interest_rate: sale.interest_rate,
-                                       payment_start_date: sale.payment_start_date,
-                                       item_type: sale.item_type, item_description: sale.item_description,
-                                       store: sale.store, pick_up_option: sale.pick_up_option, pick_up_type: sale.pick_up_type,
-                                       source_id: sale.store, status: 'pending', external_id: sale.external_id)
-        if new_cancel.save
-          sale.destroy
-          # sale.status = 'Cancelled'
-          # sale.save!
-          # store = sale.store
-          msg = "We have just CANCELLED a sale for #{sale.store}, Facility Id:  #{item_external_id}"
-          puts msg
-          puts '-------------------------------------------------------------------------------------------------------------------'
-          SendNotificationToSlackWorker.perform_async(msg)
 
-          store_msg = 'Kindly note that the following sale has been CANCELLED '
-          store_msg += "\n NAME      :- #{sale.customer_names}"
-          store_msg += "\n ID NUMBER :- #{sale.customer_id_number}"
-          store_msg += "\n ITEM      :- #{sale.item_type}"
-          store_msg += "\n STORE      :- #{sale.store}"
-          store_msg += "\n MOBILE    :- +#{sale.customer_phone_number}"
-          store_msg += "\n AMOUNT    :- #{sale.buying_price}"
+        sale.status = 'cancelled'
+        sale.save!
+        msg = "We have just CANCELLED a sale for #{sale.store}, Facility Id:  #{item_external_id}"
+        puts msg
+        puts '-------------------------------------------------------------------------------------------------------------------'
+        # SendNotificationToSlackWorker.perform_async(msg)
 
-          sale_store = Store.find_by(source_id: sale.source_id)
+        store_msg = 'Kindly note that the following sale has been CANCELLED '
+        store_msg += "\n NAME      :- #{sale.customer_names}"
+        store_msg += "\n ID NUMBER :- #{sale.customer_id_number}"
+        store_msg += "\n ITEM      :- #{sale.item_type}"
+        store_msg += "\n STORE      :- #{sale.store}"
+        store_msg += "\n MOBILE    :- +#{sale.customer_phone_number}"
+        store_msg += "\n AMOUNT    :- #{sale.buying_price}"
 
-          partner = Partner.find_by(id: sale_store.partner_id)
-          account_manager = User.find_by(id: partner.account_manager)
-          account_manager_email = 'tkivite@lipalater.com'
-          unless account_manager.nil? || account_manager.email.nil?
-            account_manager_email = account_manager.email
-          end
+        sale_store = Store.find_by(store_key: sale.store)
 
-          to = [sale_store.manager_email, sale_store.disburse_email, sale_store.disburse_email_cc1,
-                'mmaina@odysseyafricapital.com', 'disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'customers@lipalater.com', account_manager_email]
-
-          from = 'accounts@lipalater.com'
-          begin
-            puts "sending email to: #{to}   from: #{from}  msg: #{store_msg}"
-            email_payload = {
-              'subject' => "Sale Cancellation - #{sale_store.source_id.upcase} (#{Time.now.strftime('%d/%m/%Y')})",
-              'message' => store_msg,
-              'to' => to.join(','),
-              'from' => from,
-              'purpose' => 'general'
-
-            }
-            NotificationMailerWorker.perform_async(email_payload)
-          rescue StandardError => e
-            puts '------------------------------------------'
-            msg = "An error occurred while sending  sale cancellation email to #{to} with the message : #{e.inspect} Error Backtrace: #{e.backtrace}"
-            puts msg
-            puts '------------------------------------------'
-            SendNotificationToSlackWorker.perform_async(msg)
-            # render json: {error: ['Problems Occurred trying to send email.']}, status: :created
-            # return
-          end
-
-          updated << item
-
-        else
-          errors << item
-          msg = "We were NOT ABLE TO CANCEL the sale for #{store},  #{item_external_id}"
-          puts msg
-          puts '-------------------------------------------------------------------------------------------------------------------'
-          SendNotificationToSlackWorker.perform_async(msg)
-
+        partner = Partner.find_by(id: sale_store.partner_id)
+        account_manager = User.find_by(id: partner.account_manager_id)
+        account_manager_email = 'tkivite@lipalater.com'
+        unless account_manager.nil? || account_manager.email.nil?
+          account_manager_email = account_manager.email
         end
+
+        to = ['tkivite@lipalater.com', 'disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com', 'customers@lipalater.com', account_manager_email]
+
+        from = 'accounts@lipalater.com'
+        begin
+          puts "sending email to: #{to}   from: #{from}  msg: #{store_msg}"
+          email_payload = {
+            'subject' => "Sale Cancellation - #{sale_store.store_key.upcase} (#{Time.now.strftime('%d/%m/%Y')})",
+            'message' => store_msg,
+            'to' => to.join(','),
+            'from' => from,
+            'purpose' => 'general'
+
+          }
+          NotificationMailerWorker.perform_async(email_payload)
+        rescue StandardError => e
+          puts '------------------------------------------'
+          msg = "An error occurred while sending  sale cancellation email to #{to} with the message : #{e.inspect} Error Backtrace: #{e.backtrace}"
+          puts msg
+          puts '------------------------------------------'
+          # SendNotificationToSlackWorker.perform_async(msg)
+          # render json: {error: ['Problems Occurred trying to send email.']}, status: :created
+          # return
+        end
+
+        updated << item
 
       else
         collected << item
@@ -400,14 +378,14 @@ class Api::V1::DisbursedsController < Api::DisbursedController
         msg += '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n'
         puts msg
         puts '-------------------------------------------------------------------------------------------------------------------'
-        SendNotificationToSlackWorker.perform_async(msg)
+        # SendNotificationToSlackWorker.perform_async(msg)
       end
     end
     puts '-------------------------------------------------------------------------------------------------------------------'
     msg = "We have received a request to CANCEL facilities from core with the following details #{permitted_params}"
     puts msg
     puts '-------------------------------------------------------------------------------------------------------------------'
-    SendNotificationToSlackWorker.perform_async(msg)
+    # SendNotificationToSlackWorker.perform_async(msg)
     render json: { facilities_successfully_cancelled: updated, facilities_already_collected: collected, facilities_not_found: not_found, facilities_failed: errors }, status: :ok
   end
 
