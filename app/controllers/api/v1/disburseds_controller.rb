@@ -14,11 +14,18 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     # p saved_released_items
     # p params
     p '************************ Released Items  *********************************'
+    p saved_released_items.present?
+    p saved_released_items[0].present?
+    p saved_released_items[0].nil?
     # p saved_released_items
-    unless saved_released_items.present?
+    unless saved_released_items.present? && saved_released_items[0].present?
+      p 'here'
       Rails.logger.info 'We received an emty array of items for auto release'
-      render json: { status: 'Success', message: 'No Items posted ' }, status: :ok
+      render json: { status: 'Error', message: 'No Items posted' }, status: :ok
+      return
     end
+
+    # p saved_released_items[0].present?
     saved_released_items.each_with_index do |item, index|
       p "************************ ITEM: #{index} *********************************"
 
@@ -203,8 +210,8 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     }
     # Add account details to payload
     email_payload['account_details'] = account_payload
-    puts 'Sending customer email with the following payload'
-    puts email_payload.inspect
+    puts 'Sending customer email'
+    # puts email_payload.inspect
     # Call email worker
     NotificationMailerWorker.perform_async(email_payload)
   end
@@ -290,7 +297,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
         'purpose' => 'general'
 
       }
-      puts email_payload.inspect
+      # puts email_payload.inspect
       NotificationMailerWorker.perform_async(email_payload)
     end
   end
@@ -396,4 +403,55 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     #                          :sales_agent, :approved_amount, :decision, :decision_reason, facilities:[],pick_up_option: [], pick_up_type: [], buying_price: [], item_type: [],
     #                                                                                       item_brand: [], item_description: [], store: [], item_id: [])
   end
+
+  def validate_sales_payload(released_items)
+    response = { valid: false, message: '' }
+    response[:message] = 'Empty array of facilities'
+    return response unless released_items.present? && released_items[0].present?
+
+    released_items.each_with_index do |item, _index|
+      new_sale = Sale.new
+      begin
+        item = JSON.parse(item.to_json)
+        customer = item['customer']
+        country = item['country']
+        credit_limit_detail = item['credit_limit_detail']
+        customer_limit = credit_limit_detail['available_limit']
+        store = item['partner_store']['store_key']
+        external_id = item['id']
+      rescue StandardError => e
+        response[:message] = "Malformed payload #{e.backtrace}"
+        return response
+      end
+      unless new_sale.valid?
+        response[:message] = "Malformed sale data #{new_sale.errors}"
+        return response
+      end
+      { valid: true, message: 'Valid sale' }
+    end
+  end
+  def valid_sale (new_sale,item,customer,)
+    new_sale.external_id = external_id
+    # new_sale.id_number = id_number
+    new_sale.buying_price = item['item_value'].to_f
+    new_sale.item = item['item_type']
+    new_sale.item_type = item['item_brand']
+    new_sale.item_description = item['item_description']
+    new_sale.store = store
+    new_sale.released_item_id = item['id']
+    new_sale.customer_names = customer['first_name'] + ' ' + customer['last_name']
+    new_sale.customer_email = customer['email']
+    new_sale.customer_phone_number = customer['phone_number'][-9..-1] || customer['phone_number']
+    new_sale.customer_id_number = customer['id_number']
+    new_sale.pick_up_type = item['delivery_option']
+    new_sale.pick_up_option = item['preferred_option']
+    new_sale.item_code = item['item_code']
+    new_sale.item_topup_amount = item['item_topup']
+    new_sale.item_topup_ref = item['topup_ref']
+    new_sale.customer_limit = customer_limit
+    new_sale.approved_amount = customer_limit
+    new_sale.customer_country = country['alpha_2_code']
+  end
+
+  def create_sale(new_sale); end
 end

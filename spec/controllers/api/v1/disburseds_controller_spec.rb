@@ -384,6 +384,19 @@ RSpec.describe Api::V1::DisbursedsController, type: :controller do
       end
     end
   end
+  describe 'POST create sale' do
+    context 'with empty array of facilities' do
+      it 'generates empty array response' do
+        sales = { "facilities": [] }
+        post :auto_release, params: sales, as: :json
+        expect(response).to be_successful
+        b = JSON.parse(response.body)
+
+        expect(b['status']).to eq('Error')
+        expect(b['message']).to eq('No Items posted')
+      end
+    end
+  end
   describe 'POST cancel sales' do
     context 'with valid params' do
       it 'successfully cancels the provided sale by ids on hub' do
