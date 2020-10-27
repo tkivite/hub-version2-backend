@@ -85,13 +85,16 @@ sale = Sale.find_by(external_id: 'e1814f76-fdc5-442d-a9a2-47b2559eda9')
 permissions = '[ user:create,user:list,user:show,user:update,role:create,role:list,role:show,role:update,assignment:list]'
 unless sale.present?
   Sale.create!(
-    customer_names:"Jamie Bayer"
+    customer_names:"Jamie Bayer",
     customer_email:"cassey@mcclure.com",
     customer_phone_number:"719840515",
     customer_id_number:"9804194429086",
     buying_price:"8000.0",
+    approved_amount:"8000.0",
+    interest_rate:"4.2",
+    repayment_period:"12",
     item:"tablet",
-    store: store.store_key
+    store: store.store_key,
     item_type:"ASUS",
     pick_up_option:"delivery",
     external_id:"e1814f76-fdc5-442d-a9a2-47b2559eda9",

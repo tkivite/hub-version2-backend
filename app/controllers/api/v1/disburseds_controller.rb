@@ -13,69 +13,27 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     duration = 12
     # p saved_released_items
     # p params
-    p '************************ Released Items  *********************************'
-    p saved_released_items.present?
-    p saved_released_items[0].present?
-    p saved_released_items[0].nil?
-    # p saved_released_items
-    unless saved_released_items.present? && saved_released_items[0].present?
-      p 'here'
-      Rails.logger.info 'We received an emty array of items for auto release'
-      render json: { status: 'Error', message: 'No Items posted' }, status: :ok
+    p '************************ Released Items  *********************************'   
+
+    sales_validation_response = validate_sales_payload(saved_released_items)
+    unless sales_validation_response[:valid]     
+      render json: { status: 'Error', message: sales_validation_response[:message] }, status: :ok
       return
     end
+    sales = sales_validation_response[:sales]
 
-    # p saved_released_items[0].present?
-    saved_released_items.each_with_index do |item, index|
+    sales.each_with_index do |sale, index|
       p "************************ ITEM: #{index} *********************************"
 
-      item = JSON.parse(item.to_json)
-      # p item
-      # p item.to_json
-      customer = item['customer']
-      country = item['country']
-      credit_limit_detail = item['credit_limit_detail']
-      customer_limit = credit_limit_detail['available_limit']
-      store = item['partner_store']['store_key']
-      external_id = item['id']
-      new_sale = Sale.new
-      new_sale.external_id = external_id
-      # new_sale.id_number = id_number
-      new_sale.buying_price = item['item_value'].to_f
-      new_sale.item = item['item_type']
-      new_sale.item_type = item['item_brand']
-      new_sale.item_description = item['item_description']
-      new_sale.store = store
-      new_sale.released_item_id = item['id']
-      new_sale.customer_names = customer['first_name'] + ' ' + customer['last_name']
-      new_sale.customer_email = customer['email']
-      new_sale.customer_phone_number = customer['phone_number'][-9..-1] || customer['phone_number']
-      new_sale.customer_id_number = customer['id_number']
-      new_sale.pick_up_type = item['delivery_option']
-      new_sale.pick_up_option = item['preferred_option']
-      new_sale.item_code = item['item_code']
-      new_sale.item_topup_amount = item['item_topup']
-      new_sale.item_topup_ref = item['topup_ref']
-      new_sale.customer_limit = customer_limit
-      new_sale.approved_amount = customer_limit
-      new_sale.customer_country = country['alpha_2_code']
-      # new_sale.save!
-      if new_sale.save
+      if sale.save
         puts '-------------------------------------------------------------------------------------------------------------------'
-        msg = 'We have saved a new sale from core with the following details '
-        # {permitted_params}"
-        puts msg
-        # puts '-------------------------------------------------------------------------------------------------------------------'
-
-        # SendNotificationToSlackWorker.perform_async(msg)
-
-        # logic to notify partner and team of new release
-        current_store = Store.find_by(store_key: store)
-
+        msg = 'We have saved a new sale from core with the following details '      
+        puts msg        
+        current_store = Store.find_by(store_key: sale.store)
         if current_store.nil?
           # could not find store
-          subject = "Release to unknown store #{store}"
-          msg = "We have received a new sale on The Hub, but the attached store key: #{store} does not exist on The Hub."
+          subject = "Release to unknown store #{sale.store}"
+          msg = "We have received a new sale on The Hub, but the attached store key: #{sale.store} does not exist on The Hub."
           tos = ['wnzisa@lipalater.com', 'ekaguima@lipalater.com']
           ccs = ['mmaina@odysseyafricapital.com', 'disbursed@lipalater.com', 'disbursed@lipalater.com.test-google-a.com',
                  'hzare@lipalater.com', 'tech@lipalater.com', 'dorare@lipalater.com']
@@ -88,30 +46,26 @@ class Api::V1::DisbursedsController < Api::DisbursedController
             'purpose' => 'general'
           }
           NotificationMailerWorker.perform_async(email_payload)
-
           next
         end
-        received_sales << new_sale
+        p sale
+        received_sales << sale
       else
         puts '-----------------------------------------'
         puts "Could not save sale with external id: #{external_id}"
-        puts new_sale.errors.full_messages
+        puts sale.errors.full_messages
         puts '-----------------------------------------'
       end
-      principal += item['item_value'].to_f
-      rate = item['interest_rate'].to_f
-      duration = item['loan_duration'].to_i
-      # customer_release_email(new_sale, item['item_value'], item['interest_rate'], item['loan_duration'])
-
       p "************************ ITEM: #{index}  saved id: *********************************"
       # send_customer_email
     end
+    p received_sales
     store_release_email(received_sales)
-    customer_release_email(received_sales, principal, rate, duration)
+    customer_release_email(received_sales)
     render json: { status: 'Success', message: 'Items saved successfully' }, status: :ok
   end
 
-  def customer_release_email(sales, principal_amount, rate, duration)
+  def customer_release_email(sales)
     sale = sales[0]
     from = 'contracts@lipalater.com'
     tos = [sale.customer_email]
@@ -133,6 +87,10 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     pick_up_option = sale.pick_up_option
     pick_up_type = sale.pick_up_type
     # Get delivery details
+    principal_amount = sale.buying_price
+    rate = sale.interest_rate
+    duration = sale.repayment_period
+
     delivery_details = ' '
     msg += "#{sale.customer_names}, below are the terms and conditions that you agreed to and signed off on.
            We are currently processing your item(s) and we will be in touch with you to schedule delivery/collection."
@@ -405,35 +363,44 @@ class Api::V1::DisbursedsController < Api::DisbursedController
   end
 
   def validate_sales_payload(released_items)
-    response = { valid: false, message: '' }
+    response = { valid: false, message: '', sales: [] }
     response[:message] = 'Empty array of facilities'
     return response unless released_items.present? && released_items[0].present?
 
     released_items.each_with_index do |item, _index|
       new_sale = Sale.new
       begin
-        item = JSON.parse(item.to_json)
-        customer = item['customer']
-        country = item['country']
-        credit_limit_detail = item['credit_limit_detail']
-        customer_limit = credit_limit_detail['available_limit']
-        store = item['partner_store']['store_key']
-        external_id = item['id']
+        item = JSON.parse(item.to_json)     
+        new_sale = valid_sale(item)
       rescue StandardError => e
-        response[:message] = "Malformed payload #{e.backtrace}"
+        response[:message] = "Malformed payload #{e.inspect}"
         return response
       end
       unless new_sale.valid?
-        response[:message] = "Malformed sale data #{new_sale.errors}"
+        response[:message] = "Malformed facility data for id: #{new_sale.external_id}  #{new_sale.errors.full_messages}"      
         return response
-      end
-      { valid: true, message: 'Valid sale' }
+      end    
+      response[:sales] << new_sale
     end
+    response[:valid] = true
+    response[:message] = 'Valid payload'
+    response
   end
-  def valid_sale (new_sale,item,customer,)
+  def valid_sale (item)
+    new_sale = Sale.new
+
+    customer = item['customer']
+    country = item['country']
+    credit_limit_detail = item['credit_limit_detail']
+    customer_limit = credit_limit_detail['available_limit']
+    store = item['partner_store']['store_key']
+    external_id = item['id']
+
     new_sale.external_id = external_id
     # new_sale.id_number = id_number
     new_sale.buying_price = item['item_value'].to_f
+    new_sale.interest_rate = item['interest_rate'].to_f
+    new_sale.repayment_period = item['loan_duration'].to_i
     new_sale.item = item['item_type']
     new_sale.item_type = item['item_brand']
     new_sale.item_description = item['item_description']
@@ -451,6 +418,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     new_sale.customer_limit = customer_limit
     new_sale.approved_amount = customer_limit
     new_sale.customer_country = country['alpha_2_code']
+    new_sale
   end
 
   def create_sale(new_sale); end
