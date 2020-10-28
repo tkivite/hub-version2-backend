@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-class ItemsController < ApplicationController
-  include VerificationCodeHelper
+class ItemsController < ApplicationController  
   include CanonicalRequestHelper
   require 'json'
 
-  def fetch
+  def fetch_client
     parameters = {
       id_number: params[:idNumber],
       store: params[:store_key]

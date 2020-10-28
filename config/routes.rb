@@ -9,6 +9,8 @@ Rails.application.routes.draw do
   post 'forgotpassword', to: 'passwords#forgot_password'
   # post 'users', to: 'users#create'
   # get 'users', to: 'users#index'
+  post 'fetch_client', to: 'items#fetch_client'
+  post 'save_facilities', to: 'items#save_facilities'
 
   resources :users do
   end
