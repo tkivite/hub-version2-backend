@@ -13,10 +13,10 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     duration = 12
     # p saved_released_items
     # p params
-    p '************************ Released Items  *********************************'   
+    p '************************ Released Items  *********************************'
 
     sales_validation_response = validate_sales_payload(saved_released_items)
-    unless sales_validation_response[:valid]     
+    unless sales_validation_response[:valid]
       render json: { status: 'Error', message: sales_validation_response[:message] }, status: :ok
       return
     end
@@ -27,8 +27,8 @@ class Api::V1::DisbursedsController < Api::DisbursedController
 
       if sale.save
         puts '-------------------------------------------------------------------------------------------------------------------'
-        msg = 'We have saved a new sale from core with the following details '      
-        puts msg        
+        msg = 'We have saved a new sale from core with the following details '
+        puts msg
         current_store = Store.find_by(store_key: sale.store)
         if current_store.nil?
           # could not find store
@@ -48,7 +48,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
           NotificationMailerWorker.perform_async(email_payload)
           next
         end
-        p sale
+        # p sale
         received_sales << sale
       else
         puts '-----------------------------------------'
@@ -59,7 +59,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
       p "************************ ITEM: #{index}  saved id: *********************************"
       # send_customer_email
     end
-    p received_sales
+    # p received_sales
     store_release_email(received_sales)
     customer_release_email(received_sales)
     render json: { status: 'Success', message: 'Items saved successfully' }, status: :ok
@@ -142,7 +142,7 @@ class Api::V1::DisbursedsController < Api::DisbursedController
                        .to_time.strftime('%d/%m/%Y').to_s
 
     # Calclate insurance
-    insurance = principal_amount * 5 / 100
+    insurance = (principal_amount.to_f * 5) / 100
     insurance = 1500 if insurance < 1500
     insurance_instructions = ''
     insurance_instructions = if item_type == 'furniture'
@@ -370,23 +370,24 @@ class Api::V1::DisbursedsController < Api::DisbursedController
     released_items.each_with_index do |item, _index|
       new_sale = Sale.new
       begin
-        item = JSON.parse(item.to_json)     
+        item = JSON.parse(item.to_json)
         new_sale = valid_sale(item)
       rescue StandardError => e
         response[:message] = "Malformed payload #{e.inspect}"
         return response
       end
       unless new_sale.valid?
-        response[:message] = "Malformed facility data for id: #{new_sale.external_id}  #{new_sale.errors.full_messages}"      
+        response[:message] = "Malformed facility data for id: #{new_sale.external_id}  #{new_sale.errors.full_messages}"
         return response
-      end    
+      end
       response[:sales] << new_sale
     end
     response[:valid] = true
     response[:message] = 'Valid payload'
     response
   end
-  def valid_sale (item)
+
+  def valid_sale(item)
     new_sale = Sale.new
 
     customer = item['customer']

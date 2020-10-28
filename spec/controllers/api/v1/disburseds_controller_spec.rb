@@ -393,7 +393,7 @@ RSpec.describe Api::V1::DisbursedsController, type: :controller do
         b = JSON.parse(response.body)
 
         expect(b['status']).to eq('Error')
-        expect(b['message']).to eq('No Items posted')
+        expect(b['message']).to eq('Empty array of facilities')
       end
     end
   end
