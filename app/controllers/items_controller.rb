@@ -5,6 +5,8 @@ class ItemsController < ApplicationController
   require 'json'
 
   def fetch_client
+    sale = Sale.new
+    authorize sale, :view? 
     parameters = {
       id_number: params[:idNumber],
       store: params[:store_key]
@@ -15,20 +17,22 @@ class ItemsController < ApplicationController
   end
 
   def save_facilities
-    # Function to store items that the client has selected at store
-    store = current_user.store.source_id
+    # Function to store items that the client has selected at store    
+    sale = Sale.new
+    authorize sale, :create? 
     id_number = params[:idNumber]
     parameters = {
       loan_app_id: params[:completeAppId],
       id_number: id_number,
       total_amount: params[:totalAmount],
-      store_key: store,
+      store_key: params[:store],
       released_items: params[:items],
       customer_limit: params[:customerLimit],
       topup_amount: params[:customerTopupAmount],
       topup_ref: params[:customerTopupRef]
 
     }
+    # store = current_user.store.source_id
 
     # 1.1 Save items on core
     response = prepare_canonical_request('POST', 'save_client_facilities', parameters)

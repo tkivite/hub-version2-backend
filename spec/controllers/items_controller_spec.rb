@@ -3,8 +3,14 @@
 require 'rails_helper'
 RSpec.describe ItemsController, type: :controller do
   before(:each) do
-
+    @permissions = %w[sale:create sale:update sale:view sale:list  sale:destroy]
+   
+    # Create role
+    @role = FactoryBot.create(:role)
+    # Create user
     @user = FactoryBot.create(:user)
+    @role.permissions = @permissions
+    @user.roles << @role
     
     request.headers['Authorization'] = @user.authorization_token
 
@@ -14,7 +20,7 @@ RSpec.describe ItemsController, type: :controller do
     response_data_save_facility = { status: true, description: 'Success' }.to_json
     stub_request(:post, "#{lipalater_core_base_url}fetch_client")
       .to_return({ status: 'Ok', body: response_data_fetch.to_s, headers: {} })
-    stub_request(:put, "#{lipalater_core_base_url}save_client_facilities")
+    stub_request(:post, "#{lipalater_core_base_url}save_client_facilities")
       .to_return({ status: 'Ok', body: response_data_save_facility.to_s, headers: {} })
   end
 
@@ -31,9 +37,9 @@ RSpec.describe ItemsController, type: :controller do
         expect(response).to be_successful
         b = JSON.parse(response.body)
         p b
-        expect(b['status']).to eq(response_data_fetch['status'])
-        expect(b['description']).to eq(response_data_fetch['description'])
-        expect(b['payload']).to eq(response_data_fetch['payload'])
+        expect(b['status']).to eq(true)
+        expect(b['description']).to eq('success')
+        expect(b['payload']).to eq({"id"=>"custid"})
       end
     end
   end
@@ -44,8 +50,8 @@ RSpec.describe ItemsController, type: :controller do
         post :save_facilities, params: sales, as: :json
         expect(response).to be_successful
         b = JSON.parse(response.body)
-        expect(b['status']).to eq(response_data_save_facility['status'])
-        expect(b['description']).to eq(response_data_save_facility['description'])
+        expect(b['status']).to eq(true)
+        expect(b['description']).to eq('Success')
       end
     end
   end
